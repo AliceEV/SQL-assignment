@@ -1,0 +1,72 @@
+QUESTION ONE 
+
+
+CREATE TABLE Employee (
+eId VARCHAR(6),
+eName	VARCHAR(25),	
+age SMALLINT,
+PRIMARY KEY (eId)
+);
+
+CREATE TABLE Department (
+dId VARCHAR(2),
+dName VARCHAR(25), 
+address VARCHAR (25), 
+PRIMARY KEY (dId)
+);
+
+CREATE TABLE WorksIn (
+eId VARCHAR(6), 
+dId VARCHAR(2),
+since DATE,
+PRIMARY KEY (eId, dId),
+FOREIGN KEY (eId) references Employee(eId) ON DELETE SET NULL ON UPDATE CASCADE,
+FOREIGN KEY (dId) references Department(dId) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE Product (
+pId VARCHAR(5),
+pName VARCHAR(15),
+pType VARCHAR(15),
+pColor VARCHAR(10)
+);
+
+CREATE TABLE Sells (
+dId VARCHAR(2),
+pId VARCHAR(5),
+pStock INT,
+quantitySold INT,
+PRIMARY KEY (eId, dId),
+FOREIGN KEY (dId) references Department(dId) ON DELETE SET NULL ON UPDATE CASCADE,
+FOREIGN KEY (pId) references Product(pId) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+QUESTION TWO 
+
+1. Find the names of the departments which sell blue products. 
+
+SELECT D.dName FROM Department AS D WHERE D.dId IN(SELECT S.dId FROM Sells AS S NATURAL JOIN Product WHERE pColor='blue';
+
+2. Find the names of departments which sell products of type tool and products of type toy.
+
+SELECT D.dName FROM Department AS D WHERE D.dId IN(SELECT S.dId FROM Sells AS S NATURAL JOIN Product WHERE pType='Toy' INTERSECT(SELECT dId FROM Sells NATURAL JOIN Product WHERE pType='Tool'));
+
+3. Find the names of departments where one can find all red products 
+
+SELECT D.dName FROM Department AS D WHERE NOT EXISTS(SELECT P.pId FROM Product AS P WHERE P.pColor='red' EXCEPT(SELECT S.pId FROM Sells AS S WHERE S.dId=D.dId AND S.pStock>0));
+
+4. Find the ids of departments which sell blue products and do not have any employee older than 40. 
+
+SELECT DISTINCT dId FROM Product NATURAL JOIN Sells NATURAL JOIN WorksIn NATURAL JOIN Employee WHERE pColor='blue' AND age>40;
+
+5. For each department, report the department-id and the age of the oldest employee working in it 
+
+SELECT W.dId, MAX(age) AS oldestEmpInDpt FROM WorksIn AS W NATURAL JOIN Employee AS E GROUP BY W.dId;
+
+6. Find the names of employees who are older than at least one employee working in department 'Central'
+
+SELECT E.eName FROM Employee AS E, Employee AS E2 WHERE E.age>E2.age AND E.eId<>E2.eId AND E2.eId IN(SELECT W.eId FROM WorksIn AS W WHERE(SELECT D.dId FROM Department AS D WHERE D.dName= 'Central' AND D.dId=W.dId));
+
+7. Find the names of employees working in departments which have sold at least 5 types of products
+
+SELECT E.eName FROM Employee AS E NATURAL JOIN WorksIn as W WHERE W.dId IN(SELECT S.dId FROM Sells AS S NATURAL JOIN Product as P GROUP BY S.dId HAVING COUNT(DISTINCT P.pType)>=5);
